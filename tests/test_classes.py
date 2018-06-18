@@ -2,7 +2,7 @@ from unittest import mock
 
 from . import BaseTestClass
 
-from pyketo import (
+from pyspot import (
     Auth,
     Session
 )
@@ -39,7 +39,7 @@ class TestAuth(BaseOAuthTest):
 
 
 class TestSession(BaseOAuthTest):
-    target_path = 'pyketo.session'
+    target_path = 'pyspot.session'
 
     def setUp(self):
         super(TestSession, self).setUp()
