@@ -3,7 +3,6 @@ from unittest import mock
 from . import BaseTestClass
 
 from pyspot import (
-    Auth,
     Session,
     UserAuth,
     CredentialsAuth
@@ -47,26 +46,6 @@ class TestSession(BaseOAuthTest):
 
     def test_init(self):
         self.assertIsInstance(self.session, Session)
-
-    def test_get_auth_token(self):
-        """
-        If the marketo API returns the correct response, initialize a token
-
-        :return:
-        """
-
-        # Set the mock_response to contain data required to create an auth
-        # object
-        self.mock_response.json = mock.MagicMock()
-        self.mock_response.json.return_value = {
-            "access_token": self.access_token,
-            "token_type": self.token_type,
-            "expires_in": self.expires_in,
-            "scope": self.scope
-        }
-
-        self.session.refresh_auth_token()
-        self.assertIsInstance(self.session.auth, Auth)
 
     def test_refresh_auth_token(self):
         """

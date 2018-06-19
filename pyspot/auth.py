@@ -17,4 +17,4 @@ class Auth(object):
 
         :return: (Bool) True if expired, False if not
         """
-        return self.expires_at > datetime.datetime.now()
+        return self.expires_at < datetime.datetime.now()

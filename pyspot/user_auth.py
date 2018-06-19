@@ -62,3 +62,6 @@ class UserAuth(Auth):
         self.token.expires_in = response_data['expires_in']
         self.token.commit()
 
+    @property
+    def header(self):
+        return "{} {}".format(self.header_type, self.token.access_token)

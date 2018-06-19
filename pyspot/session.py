@@ -1,7 +1,5 @@
 import requests
 
-from .auth import Auth
-
 
 class Session(object):
     """
@@ -11,11 +9,9 @@ class Session(object):
     refreshing if it runs out
     """
 
-    refresh_token_url = "oauth/v1/token"
     header_key = 'headers'
     access_token_key = 'Authorization'
     url_key = 'url'
-    grant_type = 'authorization_code'
 
     def __init__(self, base_url: str, auth_token,
                  auto_base: bool = True,
@@ -25,8 +21,9 @@ class Session(object):
 
         self.base_url = base_url
         self.auto_base = auto_base
+        self.version = version
 
-        self.rest_base = "{}/rest/v{}".format(self.base_url, version)
+        self.rest_base = "{}".format(self.base_url)
 
     @property
     def auth(self):
@@ -38,7 +35,7 @@ class Session(object):
 
     @property
     def auth_header(self):
-        return "{} {}".format(self.auth.header_type, self.auth.access_token)
+        return self.auth.header
 
     def _http_request(self, url, *args, **kwargs):
 
