@@ -4,7 +4,9 @@ from . import BaseTestClass
 
 from pyspot import (
     Auth,
-    Session
+    Session,
+    UserAuth,
+    CredentialsAuth
 )
 
 
@@ -21,21 +23,9 @@ class BaseOAuthTest(BaseTestClass):
         self.test_identity_url = 'test'
         self.test_client_id = 'test'
         self.test_client_secret = 'test'
-
-
-class TestAuth(BaseOAuthTest):
-    target_path = 'pyketo.auth'
-
-    def setUp(self):
-        super(TestAuth, self).setUp()
-
-    def test_init(self):
-        auth = Auth(self.access_token, self.token_type, self.expires_in,
-                    self.scope)
-
-    def test_too_short_expires_in(self):
-        with self.assertRaises(ValueError):
-            Auth(self.access_token, self.token_type, 10, self.scope)
+        self.test_redirect_uri = 'test'
+        self.test_token = mock.MagicMock()
+        self.test_refresh_url = 'test'
 
 
 class TestSession(BaseOAuthTest):
@@ -114,5 +104,24 @@ class TestSession(BaseOAuthTest):
 
         # Assert that the old token expires before the new token
         self.assertLess(old_token.expires_at, new_token.expires_at)
+
+
+class TestUserAuth(BaseOAuthTest):
+    target_path = UserAuth.__module__
+
+    def setUp(self):
+        super(TestUserAuth, self).setUp()
+        self.requests_patch = self.create_patch('requests')
+
+    def test_init(self):
+        UserAuth(self.test_client_id, self.test_client_secret,
+                 self.test_redirect_uri, self.test_token, self.test_refresh_url)
+
+    def test_refresh(self):
+        user_auth = UserAuth(
+            self.test_client_id, self.test_client_secret,
+            self.test_redirect_uri, self.test_token, self.test_refresh_url
+        )
+        user_auth.refresh_auth_token()
 
 
