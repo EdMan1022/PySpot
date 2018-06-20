@@ -5,7 +5,8 @@ from . import BaseTestClass
 from pyspot import (
     Session,
     UserAuth,
-    CredentialsAuth
+    CredentialsAuth,
+    ApiTimer
 )
 
 
@@ -104,3 +105,10 @@ class TestUserAuth(BaseOAuthTest):
         user_auth.refresh_auth_token()
 
 
+class TestApiTimer(BaseTestClass):
+    target_path = ApiTimer.__module__
+
+    def test_init(self):
+        timer = ApiTimer(
+            request_limit_n=10, request_limit_t=10,
+            buffer_n=1, buffer_t=1, wait_buffer_t=1)
