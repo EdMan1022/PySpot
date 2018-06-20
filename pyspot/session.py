@@ -1,5 +1,7 @@
 import requests
 
+from .api_timer import ApiTimer
+
 
 class Session(object):
     """
@@ -13,15 +15,19 @@ class Session(object):
     access_token_key = 'Authorization'
     url_key = 'url'
 
-    def __init__(self, base_url: str, auth_token,
-                 auto_base: bool = True,
-                 version: int = 1):
+    def __init__(
+            self, base_url: str, auth_token,
+            auto_base: bool = True,
+            version: int = 1,
+            api_timer: ApiTimer=None
+    ):
 
         self._auth = auth_token
 
         self.base_url = base_url
         self.auto_base = auto_base
         self.version = version
+        self.api_timer = api_timer
 
         self.rest_base = "{}".format(self.base_url)
 
@@ -38,6 +44,9 @@ class Session(object):
         return self.auth.header
 
     def _http_request(self, url, *args, **kwargs):
+
+        if self.api_timer:
+            self.api_timer.check_request()
 
         if self.auto_base:
             # If the passed url is missing a leading slash, add one
