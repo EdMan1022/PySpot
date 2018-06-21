@@ -11,8 +11,10 @@ class CredentialsAuth(Auth):
     refresh the authentication token
     """
 
-    def __init__(self, grant_type, client_id, client_secret, refresh_url,
-                 header_type: str = 'Bearer'):
+    def __init__(self, client_id, client_secret, refresh_url,
+                 header_type: str = 'Bearer',
+                 grant_type: str = 'client_credentials'):
+
         self.grant_type = grant_type
         self.client_id = client_id
         self.client_secret = client_secret
@@ -36,6 +38,10 @@ class CredentialsAuth(Auth):
             "client_id": self.client_id,
             "client_secret": self.client_secret
         }
+
+    @property
+    def header(self):
+        return "{} {}".format(self.header_type, self.access_token)
 
     def refresh_auth_token(self):
         """
@@ -62,4 +68,3 @@ class CredentialsAuth(Auth):
 
         self.expires_at = (datetime.datetime.now() + datetime.timedelta(
             self.expires_in - self.buffer_time))
-
