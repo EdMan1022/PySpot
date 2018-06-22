@@ -1,3 +1,4 @@
+import datetime
 from unittest import mock
 
 from . import BaseTestClass
@@ -37,53 +38,25 @@ class TestSession(BaseOAuthTest):
 
         self.mock_response = mock.MagicMock()
         self.requests_patch.get.return_value = self.mock_response
+        self.expired_patch = self.create_patch('expired',
+                                               path='pyspot.auth.Auth')
+        self.auth_requests_patch = self.create_patch(
+            'requests', path='pyspot.user_auth')
+
+        self.auth = UserAuth(self.test_client_id, self.test_client_secret,
+                             self.test_redirect_uri, self.test_token,
+                             self.test_refresh_url)
 
         self.session = Session(
             self.test_base_url,
-            self.test_identity_url,
-            self.test_client_id,
-            self.test_client_secret
+            self.auth,
         )
 
     def test_init(self):
         self.assertIsInstance(self.session, Session)
 
-    def test_refresh_auth_token(self):
-        """
-        Tests that refreshing the access token results in a new auth token,
-        more recent than the old one
-
-        :return:
-        """
-        self.mock_response.json = mock.MagicMock()
-        self.mock_response.json.return_value = {
-            "access_token": '1',
-            "token_type": self.token_type,
-            "expires_in": self.expires_in,
-            "scope": self.scope
-        }
-
-        # Refresh first token
-        self.session.refresh_auth_token()
-
-        # Record token values
-        old_token = self.session.auth
-
-        # Change the mocked_response token value
-        self.mock_response.json.return_value['access_token'] = '2'
-
-        # Get a new token
-        self.session.refresh_auth_token()
-        new_token = self.session.auth
-
-        # Assert the tokens are different
-        self.assertNotEqual(new_token.access_token, old_token.access_token)
-
-        # Assert that the old token was created before the new token
-        self.assertLess(old_token.created_at, new_token.created_at)
-
-        # Assert that the old token expires before the new token
-        self.assertLess(old_token.expires_at, new_token.expires_at)
+    def test_request(self):
+        self.session.get('test')
 
 
 class TestUserAuth(BaseOAuthTest):
@@ -108,7 +81,66 @@ class TestUserAuth(BaseOAuthTest):
 class TestApiTimer(BaseTestClass):
     target_path = ApiTimer.__module__
 
+    def setUp(self):
+        self.sleep_patch = self.create_patch('time.sleep')
+
     def test_init(self):
         timer = ApiTimer(
             request_limit_n=10, request_limit_t=10,
             buffer_n=1, buffer_t=1, wait_buffer_t=1)
+
+    def test_over_limit(self):
+        """
+        Tests that too many requests calls a sleep operation and resets counts
+        :return:
+        """
+        request_n = 3
+        timer = ApiTimer(request_limit_n=request_n - 1, request_limit_t=40,
+                         buffer_n=0, buffer_t=0, wait_buffer_t=0)
+
+        for i in range(request_n):
+            timer.check_request()
+
+        self.assertTrue(self.sleep_patch.called)
+        self.assertTrue(timer.request_n < request_n)
+
+    def test_not_over_limit(self):
+        """
+        Tests that requests under the limit don't trigger a sleep
+
+        :return:
+        """
+        request_n = 3
+        timer = ApiTimer(request_limit_n=request_n + 1, request_limit_t=40,
+                         buffer_n=0, buffer_t=0, wait_buffer_t=0)
+
+        for i in range(request_n):
+            timer.check_request()
+
+        self.assertFalse(self.sleep_patch.called)
+        self.assertEqual(timer.request_n, request_n)
+
+    def test_reset_limit(self):
+        """
+        Tests that reset behaves as expected by manually resetting
+        :return:
+        """
+
+        timer = ApiTimer(request_limit_n=10, request_limit_t=40,
+                         buffer_n=0, buffer_t=0, wait_buffer_t=0)
+        check_time = datetime.datetime.now()
+        timer.check_request()
+
+        # Assert start time is before the check made above
+        self.assertLess(timer.start_time, check_time)
+
+        # Assert that the number of requests is greater than 0
+        self.assertGreater(timer.request_n, 0)
+
+        timer.reset_limit()
+
+        # Assert start time is after the check made above (it has been reset)
+        self.assertGreater(timer.start_time, check_time)
+
+        # Assert that the request number is 0
+        self.assertEqual(timer.request_n, 0)
