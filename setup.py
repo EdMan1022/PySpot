@@ -7,7 +7,7 @@ packages = setuptools.find_packages()
 
 setuptools.setup(
     name='PySpot',
-    version='1.0',
+    version='1.1',
     author="Edward Brennan",
     author_email="EdMan1022@gmail.com",
     description="A Python implementation of the HubSpot API",

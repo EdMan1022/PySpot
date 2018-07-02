@@ -25,7 +25,8 @@ class CredentialsAuth(Auth):
         self.token_type = None
         self.expires_in = None
         self.scope = None
-        self.expires_at = None
+
+        self.expires_at = datetime.datetime.now()
 
     @property
     def refresh_params(self):
